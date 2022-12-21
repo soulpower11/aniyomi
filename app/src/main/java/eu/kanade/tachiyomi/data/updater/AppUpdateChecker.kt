@@ -90,7 +90,7 @@ val GITHUB_REPO: String by lazy {
         // TODO: CHANGE THIS BACK
         "jmir1/aniyomi-mpv-beta"
     } else {
-        "jmir1/aniyomi"
+        "soulpower11/aniyomi"
     }
 }
 

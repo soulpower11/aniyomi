@@ -34,7 +34,7 @@ android {
         buildConfigField("String", "COMMIT_COUNT", "\"${getCommitCount()}\"")
         buildConfigField("String", "COMMIT_SHA", "\"${getGitSha()}\"")
         buildConfigField("String", "BUILD_TIME", "\"${getBuildTime()}\"")
-        buildConfigField("boolean", "INCLUDE_UPDATER", "false")
+        buildConfigField("boolean", "INCLUDE_UPDATER", "true")
         buildConfigField("boolean", "PREVIEW", "false")
 
         // Please disable ACRA or use your own instance in forked versions of the project
