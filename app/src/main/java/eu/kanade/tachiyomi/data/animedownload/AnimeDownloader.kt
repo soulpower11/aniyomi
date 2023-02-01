@@ -441,7 +441,7 @@ class AnimeDownloader(
         }
 
         // Try to find the video file.
-        val videoFile = tmpDir.listFiles()!!.find { it.name!!.startsWith("$filename.mkv") }
+        val videoFile = tmpDir.listFiles()!!.find { it.name!!.startsWith("$filename.") }
 
         // If the video is already downloaded, do nothing. Otherwise download from network
         val pageObservable = when {
@@ -513,8 +513,8 @@ class AnimeDownloader(
         val headerOptions = headers.joinToString("", "-headers '", "'") {
             "${it.first}: ${it.second}\r\n"
         }
-        val videoFile = tmpDir.findFile("$filename.mkv")
-            ?: tmpDir.createFile("$filename.mkv")!!
+        val videoFile = tmpDir.findFile("$filename.tmp")
+            ?: tmpDir.createFile("$filename.tmp")!!
         val ffmpegFilename = { videoFile.uri.toFFmpegString(context) }
 
         val ffmpegOptions = getFFmpegOptions(video, headerOptions, ffmpegFilename())
@@ -545,7 +545,7 @@ class AnimeDownloader(
         val outputDuration = getDuration(ffprobeCommand(ffmpegFilename(), null)) ?: 0F
         // allow for slight errors
         if (inputDuration > outputDuration * 1.01F) {
-            tmpDir.findFile("$filename.mkv")?.delete()
+            tmpDir.findFile("$filename.tmp")?.delete()
         }
         session.failStackTrace?.let { trace ->
             logcat(LogPriority.ERROR) { trace }
@@ -553,7 +553,9 @@ class AnimeDownloader(
         }
         return Observable.just(session)
             .map {
-                tmpDir.findFile("$filename.mkv") ?: throw Exception("Downloaded file not found")
+                val file = tmpDir.findFile("$filename.tmp")
+                file?.renameTo("$filename.mkv")
+                file ?: throw Exception("Downloaded file not found")
             }
     }
 
@@ -563,7 +565,7 @@ class AnimeDownloader(
         }
         val subtitleMaps = video.subtitleTracks.indices.joinToString(" ") {
             val index = it + 1
-            "-map $index"
+            "-map $index:s"
         }
         val subtitleMetadata = video.subtitleTracks.mapIndexed { i, sub ->
             "-metadata:s:s:$i \"title=${sub.lang}\""
@@ -573,8 +575,8 @@ class AnimeDownloader(
         return FFmpegKitConfig.parseArguments(
             headerOptions +
                 " -i \"${video.videoUrl}\" " + subtitleInputs +
-                subtitleMaps + " -map 0" +
-                " -c:a copy -c:v copy -c:s ass " +
+                "-map 0:v -map 0:a " + subtitleMaps + " -map 0:s?" +
+                " -f matroska -c:a copy -c:v copy -c:s ass " +
                 subtitleMetadata +
                 " \"$ffmpegFilename\" -y",
         )
